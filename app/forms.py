@@ -1,8 +1,15 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, EmailField, PasswordField, StringField, SubmitField
+from wtforms import (
+    BooleanField,
+    EmailField,
+    PasswordField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+)
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 
-from app.models import User
+from app.models import Post, User
 
 
 class RegisterForm(FlaskForm):
@@ -37,3 +44,13 @@ class LoginForm(FlaskForm):
     def validate_username(self, usrnm):
         if not User.query.filter_by(username=usrnm.data).first():
             raise ValidationError("No User found for this Username!")
+
+
+class CreatePostForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired()])
+    content = TextAreaField("Content", validators=[DataRequired()])
+    submit = SubmitField("Create Post")
+
+    def validate_content(self, content):
+        if Post.query.filter_by(content=content.data).first():
+            raise ValidationError("Post Already Exists. Write Something else!")
