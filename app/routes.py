@@ -1,8 +1,12 @@
-from flask import flash, redirect, render_template, url_for
+from pathlib import Path
+from secrets import token_hex
+
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
+from PIL import Image
 
 from app import app, bcrypt, db
-from app.forms import CreatePostForm, LoginForm, RegisterForm
+from app.forms import AccountUpdateForm, CreatePostForm, LoginForm, RegisterForm
 from app.models import Post, User
 
 
@@ -42,7 +46,7 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         login_user(user, remember=form.remember.data)
-        flash("Account Created Successfully! You can now Log In.", "success")
+        flash("You've Successfully Logged In!", "success")
         return redirect(url_for("home"))
     else:
         return render_template("login.html", form=form, title="Login Form")
@@ -70,3 +74,43 @@ def create_post():
         return redirect(url_for("home"))
     else:
         return render_template("create_post.html", form=form, title="Create Post")
+
+
+# Save image in compressed form
+def save_image(image):
+    # Delete's the old Image (other than the 'default' Image)
+    if current_user.picture != "default.jpg":
+        old_path = Path.cwd() / "app" / "static" / "profile_pic" / current_user.picture
+        old_path.unlink()
+
+    name = token_hex(20)
+    file_ext = Path(image.filename).suffix
+    file_name = name + file_ext
+    file_path = Path.cwd() / "app" / "static" / "profile_pic" / file_name
+    output_size = (300, 300)
+    img = Image.open(image)
+    img.thumbnail(output_size)
+    img.save(file_path)
+
+    return file_name
+
+
+@app.route("/account", methods=["POST", "GET"])
+def account():
+    form = AccountUpdateForm()
+    if form.validate_on_submit():
+        if form.image.data:
+            image = save_image(form.image.data)
+            current_user.picture = image
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        db.session.commit()
+        flash("Your Account has been Updated!", "success")
+        return redirect("/account")
+    elif request.method == "GET":
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+    image = url_for("static", filename="profile_pic/" + current_user.picture)
+    return render_template(
+        "account.html", form=form, image=image, title="Update Account"
+    )

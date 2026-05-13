@@ -1,4 +1,6 @@
+from flask_login import current_user
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField
 from wtforms import (
     BooleanField,
     EmailField,
@@ -54,3 +56,22 @@ class CreatePostForm(FlaskForm):
     def validate_content(self, content):
         if Post.query.filter_by(content=content.data).first():
             raise ValidationError("Post Already Exists. Write Something else!")
+
+
+class AccountUpdateForm(FlaskForm):
+    username = StringField(
+        "Username", validators=[DataRequired(), Length(min=2, max=20)]
+    )
+    email = EmailField("Email", validators=[DataRequired(), Email()])
+    image = FileField("Choose Image", validators=[FileAllowed(["png", "jpg"])])
+    submit = SubmitField("Update Profile")
+
+    def validate_username(self, usrnm):
+        if current_user.username != usrnm.data:
+            if User.query.filter_by(username=usrnm.data).first():
+                raise ValidationError("Username already taken. Choose something else!")
+
+    def validate_email(self, email):
+        if current_user.email != email.data:
+            if User.query.filter_by(email=email.data).first():
+                raise ValidationError("Email already exists. Choose something else!")
