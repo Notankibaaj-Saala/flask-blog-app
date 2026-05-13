@@ -75,3 +75,13 @@ class AccountUpdateForm(FlaskForm):
         if current_user.email != email.data:
             if User.query.filter_by(email=email.data).first():
                 raise ValidationError("Email already exists. Choose something else!")
+
+
+class UpdatePostForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired()])
+    content = TextAreaField("Content", validators=[DataRequired()])
+    submit = SubmitField("Update Post")
+
+    def validate_content(self, content):
+        if Post.query.filter_by(content=content.data).first():
+            raise ValidationError("Post Already Exists. Write Something else!")

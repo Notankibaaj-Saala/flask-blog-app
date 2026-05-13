@@ -6,7 +6,13 @@ from flask_login import current_user, login_user, logout_user
 from PIL import Image
 
 from app import app, bcrypt, db
-from app.forms import AccountUpdateForm, CreatePostForm, LoginForm, RegisterForm
+from app.forms import (
+    AccountUpdateForm,
+    CreatePostForm,
+    LoginForm,
+    RegisterForm,
+    UpdatePostForm,
+)
 from app.models import Post, User
 
 
@@ -126,3 +132,34 @@ def user(username):
         .paginate(page=page, per_page=5)
     )
     return render_template("user.html", posts=posts, title=user.username, user=user)
+
+
+@app.route("/post/<int:id>")
+def post(id):
+    post = Post.query.get(id)
+    return render_template("post.html", post=post, title=post.title)
+
+
+@app.route("/update-post/<int:id>", methods=["POST", "GET"])
+def update_post(id):
+    form = UpdatePostForm()
+    post = Post.query.get(id)
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        db.session.commit()
+        flash("Your Post has been Updated Successfully", "success")
+        return redirect(url_for("home"))
+    if request.method == "GET":
+        form.title.data = post.title
+        form.content.data = post.content
+    return render_template("create_post.html", form=form, title="Update Post")
+
+
+@app.route("/delete/post/<int:id>", methods=["POST", "GET"])
+def delete(id):
+    post = Post.query.get(id)
+    db.session.delete(post)
+    db.session.commit()
+    flash("Your Post has been Deleted Successfully!", "success")
+    return redirect(url_for("home"))
