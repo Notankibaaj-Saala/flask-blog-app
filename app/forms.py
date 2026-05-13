@@ -85,3 +85,20 @@ class UpdatePostForm(FlaskForm):
     def validate_content(self, content):
         if Post.query.filter_by(content=content.data).first():
             raise ValidationError("Post Already Exists. Write Something else!")
+
+
+class ForgotPassword(FlaskForm):
+    email = EmailField("Email", validators=[Email()])
+    submit = SubmitField("Send Email")
+
+    def validate_email(self, email):
+        if not User.query.filter_by(email=email.data).first():
+            raise ValidationError("No User with that Email")
+
+
+class ResestPasswordForm(FlaskForm):
+    password1 = PasswordField("New Password", validators=[DataRequired()])
+    password2 = PasswordField(
+        "Confirm Password", validators=[DataRequired(), EqualTo("password1")]
+    )
+    submit = SubmitField("Reset Password")

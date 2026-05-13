@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
+from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 
 load_dotenv()
@@ -27,6 +28,17 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
 login_manager = LoginManager(app)
+
+
+app.config["MAIL_SERVER"] = "smtp.googlemail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.getenv("USER_ID")
+app.config["MAIL_PASSWORD"] = os.getenv("USER_PASS")
+print(os.getenv("USER_ID"))
+print(os.getenv("USER_PASS"))
+
+mail = Mail(app)
 
 login_manager.login_view = "login"
 login_manager.login_message = "Please log in to view this page."

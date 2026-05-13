@@ -1,8 +1,11 @@
 from datetime import datetime
 
+from flask import flash
 from flask_login import UserMixin
+from itsdangerous import BadSignature, SignatureExpired
+from itsdangerous import URLSafeTimedSerializer as Serializer
 
-from app import db, login_manager
+from app import app, db, login_manager
 
 
 @login_manager.user_loader
@@ -20,6 +23,24 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return self.username
+
+    def token_generator(self):
+        s = Serializer(app.secret_key)
+        return s.dumps(self.id, salt="Helu")
+
+    @staticmethod
+    def token_verification(token):
+        s = Serializer(app.secret_key)
+        try:
+            uid = s.loads(token, salt="Helu", max_age=1800)
+        except SignatureExpired:
+            flash("Your link has expired. Please request a new one.", "warning")
+            return "Expired"
+        except BadSignature:
+            flash("Invalid or Tampered link.", "danger")
+            return "Modified"
+        else:
+            return User.query.get(uid)
 
 
 class Post(db.Model):
