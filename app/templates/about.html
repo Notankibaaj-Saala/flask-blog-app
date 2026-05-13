@@ -7,7 +7,7 @@
   <div class="media-body">
     <div class="article-metadata">
       <h4 class="mb-0">About This Blog</h4>
-      <small class="text-muted">Created by "Guest"</small>
+      <small class="text-muted">Created by {{ current_user.username if current_user.is_authenticated else "Guest" }}</small>
     </div>
 
     <h2 class="article-title mt-2">My Journey in Development</h2>

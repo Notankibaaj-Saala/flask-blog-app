@@ -28,4 +28,8 @@ bcrypt = Bcrypt(app)
 
 login_manager = LoginManager(app)
 
+login_manager.login_view = "login"
+login_manager.login_message = "Please log in to view this page."
+login_manager.login_message_category = "info"
+
 from app import routes  # noqa: E402, F401

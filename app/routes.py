@@ -1,8 +1,8 @@
 from pathlib import Path
 from secrets import token_hex
 
-from flask import flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_user, logout_user
+from flask import abort, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
 from PIL import Image
 
 from app import app, bcrypt, db
@@ -30,6 +30,12 @@ def about():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if current_user.is_authenticated:
+        flash(
+            "You're already logged In. Logout first, in order to Register again!",
+            "info",
+        )
+        return redirect(url_for("home"))
     form = RegisterForm()
     if form.validate_on_submit():
         password = form.password1.data
@@ -48,12 +54,20 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        flash(
+            "You're already logged In. Logout first, in order to Login again!",
+            "info",
+        )
+        return redirect(url_for("home"))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         login_user(user, remember=form.remember.data)
         flash("You've Successfully Logged In!", "success")
-        return redirect(url_for("home"))
+        nxt = request.args.get("next")
+        print(nxt)
+        return redirect(nxt) if nxt else redirect(url_for("home"))
     else:
         return render_template("login.html", form=form, title="Login Form")
 
@@ -68,6 +82,7 @@ def logout():
 
 
 @app.route("/create-post", methods=["POST", "GET"])
+@login_required
 def create_post():
     form = CreatePostForm()
     if form.validate_on_submit():
@@ -102,6 +117,7 @@ def save_image(image):
 
 
 @app.route("/account", methods=["POST", "GET"])
+@login_required
 def account():
     form = AccountUpdateForm()
     if form.validate_on_submit():
@@ -140,10 +156,13 @@ def post(id):
     return render_template("post.html", post=post, title=post.title)
 
 
-@app.route("/update-post/<int:id>", methods=["POST", "GET"])
+@app.route("/update/post/<int:id>", methods=["POST", "GET"])
+@login_required
 def update_post(id):
-    form = UpdatePostForm()
     post = Post.query.get(id)
+    if current_user != post.author:
+        abort(403)
+    form = UpdatePostForm()
     if form.validate_on_submit():
         post.title = form.title.data
         post.content = form.content.data
@@ -157,8 +176,11 @@ def update_post(id):
 
 
 @app.route("/delete/post/<int:id>", methods=["POST", "GET"])
+@login_required
 def delete(id):
     post = Post.query.get(id)
+    if current_user != post.author:
+        abort(403)
     db.session.delete(post)
     db.session.commit()
     flash("Your Post has been Deleted Successfully!", "success")
