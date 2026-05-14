@@ -1,17 +1,10 @@
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from wtforms import (
-    BooleanField,
-    EmailField,
-    PasswordField,
-    StringField,
-    SubmitField,
-    TextAreaField,
-)
+from wtforms import BooleanField, EmailField, PasswordField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 
-from app.models import Post, User
+from app.models import User
 
 
 class RegisterForm(FlaskForm):
@@ -48,16 +41,6 @@ class LoginForm(FlaskForm):
             raise ValidationError("No User found for this Username!")
 
 
-class CreatePostForm(FlaskForm):
-    title = StringField("Title", validators=[DataRequired()])
-    content = TextAreaField("Content", validators=[DataRequired()])
-    submit = SubmitField("Create Post")
-
-    def validate_content(self, content):
-        if Post.query.filter_by(content=content.data).first():
-            raise ValidationError("Post Already Exists. Write Something else!")
-
-
 class AccountUpdateForm(FlaskForm):
     username = StringField(
         "Username", validators=[DataRequired(), Length(min=2, max=20)]
@@ -75,16 +58,6 @@ class AccountUpdateForm(FlaskForm):
         if current_user.email != email.data:
             if User.query.filter_by(email=email.data).first():
                 raise ValidationError("Email already exists. Choose something else!")
-
-
-class UpdatePostForm(FlaskForm):
-    title = StringField("Title", validators=[DataRequired()])
-    content = TextAreaField("Content", validators=[DataRequired()])
-    submit = SubmitField("Update Post")
-
-    def validate_content(self, content):
-        if Post.query.filter_by(content=content.data).first():
-            raise ValidationError("Post Already Exists. Write Something else!")
 
 
 class ForgotPassword(FlaskForm):

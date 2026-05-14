@@ -14,3 +14,6 @@ wheels/
 
 # Static Files
 static/
+
+# tests
+test.py

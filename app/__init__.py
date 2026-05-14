@@ -1,5 +1,3 @@
-import os
-
 from dotenv import load_dotenv
 from flask import Flask
 from flask_bcrypt import Bcrypt
@@ -7,41 +5,37 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 
+from app.config import Config
+
 load_dotenv()
 
-app = Flask(__name__)
 
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
+db = SQLAlchemy()
+bcrypt = Bcrypt()
+login_manager = LoginManager()
+mail = Mail()
 
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-
-db = SQLAlchemy(app)
-
-bcrypt = Bcrypt(app)
-
-login_manager = LoginManager(app)
-
-
-app.config["MAIL_SERVER"] = "smtp.googlemail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.getenv("USER_ID")
-app.config["MAIL_PASSWORD"] = os.getenv("USER_PASS")
-print(os.getenv("USER_ID"))
-print(os.getenv("USER_PASS"))
-
-mail = Mail(app)
-
-login_manager.login_view = "login"
+login_manager.login_view = "users.login"
 login_manager.login_message = "Please log in to view this page."
 login_manager.login_message_category = "info"
 
-from app import routes  # noqa: E402, F401
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    db.init_app(app)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
+    mail.init_app(app)
+
+    from app.errors.handlers import errors
+    from app.main.routes import main
+    from app.posts.routes import posts
+    from app.users.routes import users
+
+    app.register_blueprint(users)
+    app.register_blueprint(posts)
+    app.register_blueprint(main)
+    app.register_blueprint(errors)
+
+    return app
