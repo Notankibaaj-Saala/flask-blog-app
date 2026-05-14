@@ -1,31 +1,15 @@
-from pathlib import Path
-from secrets import token_hex
-
+from cloudinary.uploader import upload
 from flask import url_for
-from flask_login import current_user
 from flask_mail import Message
-from PIL import Image
 
 from app import mail
 
 
-# Save image in compressed form
 def save_image(image):
-    # Delete's the old Image (other than the 'default' Image)
-    if current_user.picture != "default.jpg":
-        old_path = Path.cwd() / "app" / "static" / "profile_pic" / current_user.picture
-        old_path.unlink()
 
-    name = token_hex(20)
-    file_ext = Path(image.filename).suffix
-    file_name = name + file_ext
-    file_path = Path.cwd() / "app" / "static" / "profile_pic" / file_name
-    output_size = (300, 300)
-    img = Image.open(image)
-    img.thumbnail(output_size)
-    img.save(file_path)
+    result = upload(image)
 
-    return file_name
+    return result["secure_url"]
 
 
 def send_mail(user, token):

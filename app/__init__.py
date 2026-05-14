@@ -1,3 +1,4 @@
+import cloudinary
 from dotenv import load_dotenv
 from flask import Flask
 from flask_bcrypt import Bcrypt
@@ -23,6 +24,13 @@ login_manager.login_message_category = "info"
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    cloudinary.config(
+        cloud_name=app.config["CLOUD_NAME"],
+        api_key=app.config["API_KEY"],
+        api_secret=app.config["API_SECRET"],
+        secure=True,
+    )
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)

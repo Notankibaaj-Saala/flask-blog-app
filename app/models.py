@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import flash, current_app
+from flask import current_app, flash
 from flask_login import UserMixin
 from itsdangerous import BadSignature, SignatureExpired
 from itsdangerous import URLSafeTimedSerializer as Serializer
@@ -18,7 +18,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), nullable=False, unique=True)
     email = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(60), nullable=False)
-    picture = db.Column(db.String(80), default="default.jpg")
+    picture = db.Column(db.Text, nullable=False, default="https://res.cloudinary.com/dnp9m5bqj/image/upload/v1778784325/default_jazgao.jpg")
     posts = db.relationship("Post", backref="author", lazy=True)
 
     def __repr__(self):
